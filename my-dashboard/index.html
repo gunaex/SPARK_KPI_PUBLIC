@@ -155,7 +155,7 @@
     </div>
 
     <script>
-        // รหัสผ่าน "Sp@2l<" ที่ถูกทำเป็น SHA-256 Hash แล้ว
+
         const PASS_HASH = "748058728989f6103606f7093259b1a50098df981e19f7274092497645f7f985";
 
         const questionBank = [
@@ -249,7 +249,6 @@
             const uMath = parseInt(document.getElementById('mathInput').value);
             const uQ = document.getElementById('qSelect').value;
 
-            // คำนวณ Hash ของรหัสที่ผู้ใช้กรอกมา
             const uPassHash = await sha256(uPass);
 
             if (uPassHash === PASS_HASH && uMath === correctMath && uQ === correctQ) {
