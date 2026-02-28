@@ -73,7 +73,6 @@
         input:focus {
             outline: none;
             border-color: var(--primary);
-            ring: 2px solid #bfdbfe;
         }
 
         button {
@@ -111,9 +110,16 @@
 
         h3 {
             margin-top: 0;
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        h2 {
+            margin-top: 5px;
             color: #0f172a;
             border-bottom: 1px solid #f1f5f9;
             padding-bottom: 10px;
+            font-size: 1.25rem;
         }
     </style>
 </head>
@@ -121,7 +127,8 @@
 <body>
 
     <div class="card">
-        <h3>Security Check "Sp@2l&lt;"</h3>
+        <h3>เช็คหน่อยว่าเป็น ทีมเดียวกันไหม!! </h3>
+        <h2>Security Check "Sp@2l&lt;"</h2>
 
         <div id="timerText">00:30</div>
         <div class="timer-container">
@@ -148,7 +155,9 @@
     </div>
 
     <script>
-        const PASS_CODE = "Sp@2l<";
+        // รหัสผ่าน "Sp@2l<" ที่ถูกทำเป็น SHA-256 Hash แล้ว
+        const PASS_HASH = "748058728989f6103606f7093259b1a50098df981e19f7274092497645f7f985";
+
         const questionBank = [
             { q: "Capital of Japan?", a: "Tokyo", opt: ["Seoul", "Tokyo", "Beijing", "Bangkok"] },
             { q: "Largest ocean?", a: "Pacific", opt: ["Atlantic", "Indian", "Arctic", "Pacific"] },
@@ -176,6 +185,14 @@
         let timerId;
         let correctMath, correctQ;
 
+        // ฟังก์ชันคำนวณ Hash (SHA-256)
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         function startTimer() {
             timeLeft = 30;
             updateTimerUI();
@@ -197,17 +214,14 @@
         }
 
         function setupGame() {
-            // Reset Inputs
             document.getElementById('mathInput').value = "";
             document.getElementById('passInput').value = "";
 
-            // Math
             const n1 = Math.floor(Math.random() * 15) + 2;
             const n2 = Math.floor(Math.random() * 15) + 2;
             correctMath = n1 + n2;
             document.getElementById('mathLabel').innerText = `What is ${n1} + ${n2}?`;
 
-            // Question
             const rand = questionBank[Math.floor(Math.random() * questionBank.length)];
             correctQ = rand.a;
             document.getElementById('qLabel').innerText = rand.q;
@@ -230,12 +244,15 @@
             msg.innerText = text;
         }
 
-        function checkAnswers() {
+        async function checkAnswers() {
             const uPass = document.getElementById('passInput').value;
             const uMath = parseInt(document.getElementById('mathInput').value);
             const uQ = document.getElementById('qSelect').value;
 
-            if (uPass === PASS_CODE && uMath === correctMath && uQ === correctQ) {
+            // คำนวณ Hash ของรหัสที่ผู้ใช้กรอกมา
+            const uPassHash = await sha256(uPass);
+
+            if (uPassHash === PASS_HASH && uMath === correctMath && uQ === correctQ) {
                 clearInterval(timerId);
                 const msg = document.getElementById('msg');
                 msg.style.color = "#059669";
