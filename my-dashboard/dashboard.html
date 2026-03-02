@@ -315,47 +315,16 @@
 
             <!-- TAB 1: PMO Health Dashboard -->
             <div id="dashboard1" class="tab-container active">
-                <div class="grid-sub">
+                <div class="grid-2col">
                     <div class="card">
                         <div class="chart-title">Overall Health <span class="pmo-badge">All Projects</span></div>
                         <div class="chart-h"><canvas id="healthChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <div class="chart-title">Current Pipeline <span class="pmo-badge">Status Stages</span></div>
-                        <div class="chart-h"><canvas id="pipelineChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <div class="chart-title">Milestone Success Rate %</div>
-                        <div class="chart-h"><canvas id="radarChart"></canvas></div>
-                    </div>
-                </div>
-
-                <div class="grid-main">
-                    <div class="card">
-                        <div class="chart-title">Section Efficiency (%) <span class="pmo-badge">Baseline 100% (Qty:
-                                n)</span></div>
-                        <div class="chart-h"><canvas id="sectionScoreChart"></canvas></div>
                     </div>
                     <div class="card">
                         <div class="chart-title">Milestone Status Ranking <span class="pmo-badge">Total Task
                                 Count</span>
                         </div>
                         <div class="chart-h"><canvas id="phaseRankingChart"></canvas></div>
-                    </div>
-                </div>
-
-                <div class="grid-sub">
-                    <div class="card">
-                        <div class="chart-title">Avg Days Variance <span class="pmo-badge">+/- Days</span></div>
-                        <div class="chart-h"><canvas id="bottleneckChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <div class="chart-title">Team Distribution <span class="pmo-badge">Dynamic Source</span></div>
-                        <div class="chart-h"><canvas id="teamChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <div class="chart-title">Late Issue Risk Breakdown</div>
-                        <div class="chart-h"><canvas id="solutionChart"></canvas></div>
                     </div>
                 </div>
 
@@ -828,60 +797,8 @@
             };
 
             reset('h'); charts.h = new Chart(document.getElementById('healthChart'), { type: 'doughnut', data: { labels: [`On Time (${health.normal + health.advance})`, `Delay (${health.delay})`], datasets: [{ data: [health.normal + health.advance, health.delay], backgroundColor: [colors.olive, colors.rust] }] }, options: baseOpt });
-            reset('pipe'); charts.pipe = new Chart(document.getElementById('pipelineChart'), { type: 'bar', data: { labels: Object.keys(pipeMap), datasets: [{ label: 'Projects', data: Object.values(pipeMap), backgroundColor: colors.taupe }] }, options: { ...baseOpt, indexAxis: 'y', plugins: { ...baseOpt.plugins, datalabels: { display: true, color: '#fff', anchor: 'center', formatter: v => v } } } });
-
-            // Section Efficiency with Days Saved/Delayed in Label
-            reset('ss'); const sLabels = Object.keys(secData).sort((a, b) => secData[b].pct - secData[a].pct);
-            charts.ss = new Chart(document.getElementById('sectionScoreChart'), {
-                type: 'bar', data: { labels: sLabels, datasets: [{ label: 'Efficiency %', data: sLabels.map(l => secData[l].pct), backgroundColor: (ctx) => ctx.raw > 100 ? colors.olive : (ctx.raw < 100 ? colors.rust : colors.blue) }] }, options: {
-                    ...baseOpt, indexAxis: 'y', plugins: {
-                        ...baseOpt.plugins, datalabels: {
-                            display: true, color: '#fff', anchor: 'center', formatter: (val, ctx) => {
-                                const s = secData[ctx.chart.data.labels[ctx.dataIndex]];
-                                const dayLabel = s.days >= 0 ? `+${s.days}d Saved` : `${s.days}d Delay`;
-                                return `${val.toFixed(1)}% (${dayLabel})`;
-                            }
-                        }
-                    }
-                }
-            });
-
+            
             reset('pr'); charts.pr = new Chart(document.getElementById('phaseRankingChart'), { type: 'bar', data: { labels: pStats.map(p => p.name), datasets: [{ label: 'Adv', data: pStats.map(p => p.advance), backgroundColor: colors.olive }, { label: 'On Time', data: pStats.map(p => p.normal), backgroundColor: colors.blue }, { label: 'Delay', data: pStats.map(p => p.delay), backgroundColor: colors.rust }] }, options: { ...baseOpt, scales: { x: { stacked: true, ticks: { font: { size: 8 } } }, y: { stacked: true } }, plugins: { ...baseOpt.plugins, datalabels: { display: true, color: '#fff', anchor: 'center', formatter: (v, ctx) => { return v > 0 ? v : ''; } } } } });
-
-            reset('v'); charts.v = new Chart(document.getElementById('bottleneckChart'), {
-                type: 'bar', data: {
-                    labels: pStats.map(p => p.name),
-                    datasets: [{
-                        label: 'Avg Variance',
-                        data: pStats.map(p => Math.round(p.totalDiff / (p.count || 1))),
-                        backgroundColor: (c) => c.raw > 0 ? colors.rust : colors.olive
-                    }]
-                },
-                options: {
-                    ...baseOpt,
-                    scales: {
-                        x: { ticks: { font: { size: 8 } } },
-                        y: { grace: '20%' }
-                    },
-                    plugins: {
-                        ...baseOpt.plugins,
-                        datalabels: {
-                            display: true,
-                            color: '#444',
-                            anchor: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 0 ? 'end' : 'start',
-                            align: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 0 ? 'top' : 'bottom',
-                            formatter: v => v + 'd',
-                            font: { weight: 'bold', size: 9 }
-                        }
-                    }
-                }
-            });
-
-            reset('r'); charts.r = new Chart(document.getElementById('radarChart'), { type: 'radar', data: { labels: pStats.map(p => p.name), datasets: [{ label: 'Success %', data: pStats.map(p => p.count > 0 ? Math.round(((p.advance + p.normal) / p.count) * 100) : 0), borderColor: colors.olive, backgroundColor: 'rgba(85,139,47,0.1)' }] }, options: { ...baseOpt, plugins: { ...baseOpt.plugins, datalabels: { display: false } }, scales: { r: { min: 0, max: 100, pointLabels: { font: { size: 8 } } } } } });
-
-            reset('t'); charts.t = new Chart(document.getElementById('teamChart'), { type: 'bar', data: { labels: Object.keys(teamMap), datasets: [{ label: 'Late', data: Object.values(teamMap).map(v => v.late), backgroundColor: colors.rust }, { label: 'OK', data: Object.values(teamMap).map(v => v.ok), backgroundColor: colors.olive }] }, options: { ...baseOpt, scales: { x: { stacked: true }, y: { stacked: true } } } });
-
-            reset('sol'); charts.sol = new Chart(document.getElementById('solutionChart'), { type: 'pie', data: { labels: Object.keys(solMap), datasets: [{ data: Object.values(solMap), backgroundColor: [colors.rust, colors.taupe, colors.blue, colors.olive] }] }, options: baseOpt });
 
             // Triple Analysis Chart for Section Efficiency (Horizontal Bars)
             reset('sef');
