@@ -736,6 +736,10 @@
                             hasAdvance = true;
                         }
                         else pStats[i].normal++;
+                    } else if (hasAtLeastOneActual) {
+                        // Project has data elsewhere, but missing dates for THIS specific milestone
+                        // We count it as 'Normal/On-Time' by default to maintain the total row count of 27
+                        pStats[i].normal++;
                     }
                 });
 
