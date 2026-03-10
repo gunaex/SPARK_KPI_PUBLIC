@@ -317,11 +317,11 @@
             <div id="dashboard1" class="tab-container active">
                 <div class="grid-2col">
                     <div class="card">
-                        <div class="chart-title">Overall Health <span class="pmo-badge">All Projects</span></div>
+                        <div class="chart-title">Overall Health <span class="pmo-badge" id="overallHealthBadge">All Projects</span></div>
                         <div class="chart-h"><canvas id="healthChart"></canvas></div>
                     </div>
                     <div class="card">
-                        <div class="chart-title">Milestone Status Ranking <span class="pmo-badge">Total Task
+                        <div class="chart-title">Milestone Status Ranking <span class="pmo-badge" id="milestoneRankingBadge">Total Task
                                 Count</span>
                         </div>
                         <div class="chart-h"><canvas id="phaseRankingChart"></canvas></div>
@@ -714,8 +714,12 @@
                 const tName = r[colMap.team] || "Unassigned";
                 if (!teamMap[tName]) teamMap[tName] = { late: 0, ok: 0 };
 
+                let hasAtLeastOneActual = false;
+
                 activePhases.forEach((p, i) => {
                     const start = parseDate(r[p.s]), target = parseDate(r[p.t]), actual = parseDate(r[p.a]);
+                    if (actual) hasAtLeastOneActual = true;
+
                     if (target && actual) {
                         loggedPhases++;
                         const daysVar = Math.round((actual.getTime() - target.getTime()) / 86400000);
@@ -735,27 +739,29 @@
                     }
                 });
 
-                if (hasDelay) { portHealth.delay++; teamMap[tName].late++; }
-                else if (hasAdvance) { portHealth.advance++; teamMap[tName].ok++; }
-                else { portHealth.normal++; teamMap[tName].ok++; }
+                if (hasAtLeastOneActual) {
+                    if (hasDelay) { portHealth.delay++; teamMap[tName].late++; }
+                    else if (hasAdvance) { portHealth.advance++; teamMap[tName].ok++; }
+                    else { portHealth.normal++; teamMap[tName].ok++; }
 
-                const sec = r[colMap.section] || "Unknown";
-                if (!sectionEffs[sec]) sectionEffs[sec] = { x: 0, y: 0, qty: 0 };
-                if (!sectionStatus[sec]) sectionStatus[sec] = { onTime: 0, delay: 0, advance: 0, qty: 0 };
-                
-                if (loggedPhases > 0 && pY > 0) {
-                    sectionEffs[sec].x += pX;
-                    sectionEffs[sec].y += pY;
-                    sectionEffs[sec].qty++;
+                    const sec = r[colMap.section] || "Unknown";
+                    if (!sectionEffs[sec]) sectionEffs[sec] = { x: 0, y: 0, qty: 0 };
+                    if (!sectionStatus[sec]) sectionStatus[sec] = { onTime: 0, delay: 0, advance: 0, qty: 0 };
+                    
+                    if (loggedPhases > 0 && pY > 0) {
+                        sectionEffs[sec].x += pX;
+                        sectionEffs[sec].y += pY;
+                        sectionEffs[sec].qty++;
+                    }
+
+                    if (hasDelay) sectionStatus[sec].delay++;
+                    else if (hasAdvance) sectionStatus[sec].advance++;
+                    else sectionStatus[sec].onTime++;
+                    sectionStatus[sec].qty++;
+
+                    const sol = r[colMap.solution] || "Other";
+                    solMap[sol] = (solMap[sol] || 0) + 1;
                 }
-
-                if (hasDelay) sectionStatus[sec].delay++;
-                else if (hasAdvance) sectionStatus[sec].advance++;
-                else sectionStatus[sec].onTime++;
-                sectionStatus[sec].qty++;
-
-                const sol = r[colMap.solution] || "Other";
-                solMap[sol] = (solMap[sol] || 0) + 1;
             });
 
             // Executive Note Logic
@@ -779,6 +785,13 @@
 
             document.getElementById('sum-norm').innerText = `ON TIME: ${portHealth.normal + portHealth.advance}`;
             document.getElementById('sum-delay').innerText = `DELAY: ${portHealth.delay}`;
+
+            const totalActiveProjects = portHealth.normal + portHealth.advance + portHealth.delay;
+            const healthBadge = document.getElementById('overallHealthBadge');
+            if (healthBadge) healthBadge.innerText = `Qty: ${totalActiveProjects}`;
+            
+            const milestoneBadge = document.getElementById('milestoneRankingBadge');
+            if (milestoneBadge) milestoneBadge.innerText = `Total: ${totalActiveProjects}`;
 
             updateDashboard1Visuals(portHealth, pStats, finalScores, pipeMap, teamMap, solMap, sectionStatus);
             updateDashboard2Visuals();
