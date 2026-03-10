@@ -726,7 +726,7 @@
 
                         if (daysVar > 0) {
                             pStats[i].delay++; hasDelay = true; if (daysVar > pStats[i].maxDelay) pStats[i].maxDelay = daysVar;
-                            const sol = r[colMap.solution] || "Other"; solMap[sol] = (solMap[sol] || 0) + 1;
+                            // const sol = r[colMap.solution] || "Other"; solMap[sol] = (solMap[sol] || 0) + 1;
                         } else if (daysVar < 0) {
                             pStats[i].advance++;
                             hasAdvance = true;
@@ -739,20 +739,23 @@
                 else if (hasAdvance) { portHealth.advance++; teamMap[tName].ok++; }
                 else { portHealth.normal++; teamMap[tName].ok++; }
 
+                const sec = r[colMap.section] || "Unknown";
+                if (!sectionEffs[sec]) sectionEffs[sec] = { x: 0, y: 0, qty: 0 };
+                if (!sectionStatus[sec]) sectionStatus[sec] = { onTime: 0, delay: 0, advance: 0, qty: 0 };
+                
                 if (loggedPhases > 0 && pY > 0) {
-                    const sec = r[colMap.section] || "Unknown";
-                    if (!sectionEffs[sec]) sectionEffs[sec] = { x: 0, y: 0, qty: 0 };
-                    if (!sectionStatus[sec]) sectionStatus[sec] = { onTime: 0, delay: 0, advance: 0, qty: 0 };
-
                     sectionEffs[sec].x += pX;
                     sectionEffs[sec].y += pY;
                     sectionEffs[sec].qty++;
-
-                    if (hasDelay) sectionStatus[sec].delay++;
-                    else if (hasAdvance) sectionStatus[sec].advance++;
-                    else sectionStatus[sec].onTime++;
-                    sectionStatus[sec].qty++;
                 }
+
+                if (hasDelay) sectionStatus[sec].delay++;
+                else if (hasAdvance) sectionStatus[sec].advance++;
+                else sectionStatus[sec].onTime++;
+                sectionStatus[sec].qty++;
+
+                const sol = r[colMap.solution] || "Other";
+                solMap[sol] = (solMap[sol] || 0) + 1;
             });
 
             // Executive Note Logic
