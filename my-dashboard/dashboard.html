@@ -736,10 +736,6 @@
                             hasAdvance = true;
                         }
                         else pStats[i].normal++;
-                    } else if (hasAtLeastOneActual) {
-                        // Project has data elsewhere, but missing dates for THIS specific milestone
-                        // We count it as 'Normal/On-Time' by default to maintain the total row count of 27
-                        pStats[i].normal++;
                     }
                 });
 
@@ -818,7 +814,37 @@
 
             reset('h'); charts.h = new Chart(document.getElementById('healthChart'), { type: 'doughnut', data: { labels: [`On Time (${health.normal + health.advance})`, `Delay (${health.delay})`], datasets: [{ data: [health.normal + health.advance, health.delay], backgroundColor: [colors.olive, colors.rust] }] }, options: baseOpt });
             
-            reset('pr'); charts.pr = new Chart(document.getElementById('phaseRankingChart'), { type: 'bar', data: { labels: pStats.map(p => p.name), datasets: [{ label: 'Adv', data: pStats.map(p => p.advance), backgroundColor: colors.olive }, { label: 'On Time', data: pStats.map(p => p.normal), backgroundColor: colors.blue }, { label: 'Delay', data: pStats.map(p => p.delay), backgroundColor: colors.rust }] }, options: { ...baseOpt, scales: { x: { stacked: true, ticks: { font: { size: 8 } } }, y: { stacked: true } }, plugins: { ...baseOpt.plugins, datalabels: { display: true, color: '#fff', anchor: 'center', formatter: (v, ctx) => { return v > 0 ? v : ''; } } } } });
+            reset('pr'); charts.pr = new Chart(document.getElementById('phaseRankingChart'), { 
+                type: 'bar', 
+                data: { 
+                    labels: pStats.map(p => p.name), 
+                    datasets: [
+                        { label: 'Adv', data: pStats.map(p => p.advance), backgroundColor: colors.olive }, 
+                        { label: 'On Time', data: pStats.map(p => p.normal), backgroundColor: colors.blue }, 
+                        { label: 'Delay', data: pStats.map(p => p.delay), backgroundColor: colors.rust }
+                    ] 
+                }, 
+                options: { 
+                    ...baseOpt, 
+                    scales: { 
+                        x: { stacked: true, ticks: { font: { size: 8 } } }, 
+                        y: { 
+                            stacked: true,
+                            beginAtZero: true,
+                            suggestedMax: 27 
+                        } 
+                    }, 
+                    plugins: { 
+                        ...baseOpt.plugins, 
+                        datalabels: { 
+                            display: true, 
+                            color: '#fff', 
+                            anchor: 'center', 
+                            formatter: (v, ctx) => { return v > 0 ? v : ''; } 
+                        } 
+                    } 
+                } 
+            });
 
             // Triple Analysis Chart for Section Efficiency (Horizontal Bars)
             reset('sef');
